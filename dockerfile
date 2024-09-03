@@ -20,6 +20,14 @@ RUN apt-get update && apt-get install -y \
     && make \
     && make install
 
+# Create a new user so we don't have to run as root.
+RUN useradd -m 6502ASMUser
+
+USER 6502ASMUser
+
+# We will be running in prod by default
+ENV NODE_ENV=production
+
 RUN chmod +x /usr/src/app/entrypoint.sh
 
 EXPOSE 3001

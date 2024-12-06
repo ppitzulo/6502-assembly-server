@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = 3001;
@@ -11,9 +12,15 @@ const PORT = 3001;
 const environment = process.env.NODE_ENV || 'development';
 console.log(`Running in ${environment} mode`);
 
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // max 30 requests per minute
+});
+
 app.use(cors());
 app.use(morgan('combined'))
 app.use(express.raw({ type: 'text/plain', limit: '10mb' }));
+app.use(limiter);
 
 app.post('/assemble', (req, res) => {
   const assemblyCode = req.body.toString('utf8'); // Convert raw buffer to string
@@ -28,7 +35,7 @@ app.post('/assemble', (req, res) => {
   // Run the assembler using the entrypoint script
   execFile(entrypointPath, [inputFilePath], (error, stdout, stderr) => {
     if (error) {
-      console.error(`Error: ${stderr}`);
+      console.error(`Error: ${error}`);
       res.status(500).send(stderr);
       return;
     }
